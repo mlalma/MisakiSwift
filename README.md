@@ -41,6 +41,79 @@ let text = "[Misaki](/misˈɑki/) is a G2P engine designed for [Kokoro](/kˈOkə
 let (phonemes, _) = g2p.phonemize(text: text)
 // "misˈɑki ɪz ɐ ʤˈitəpˈi ˈɛnʤən dəzˈInd fɔɹ kˈOkəɹO mˈɑdᵊlz."
 ```
+## For XCode UI users
+
+
+If you want to experiment with this in Xcode, the following steps should save you some time.
+- Upgrade to Xcode 26 (Swift 6.2), I had a lot of problems with dependencies until I did that. Just go to the AppStore on your Mac and "update" your Xcode.
+- Open Xcode and: CREATE a "New Project", NEXT, Misaki (for Project Name), CREATE 
+- Go to FILE / Add Packge Dependencies. Click on GitHub and paste this into the search-box: https://github.com/mlalma/MisakiSwift.git
+- It should display details about the MisakiSwift package. Click Add Package, and Add Package on the next screen.
+- There should now be 3 package dependencies listed in the left column. (MisakiSwift, mlx-swift, swift-numerics)
+- Click on the Project icon (top icon in the left column). The "General Tab" should be selected in the main screen area.
+- Scroll down about 2/3 on the main screen to: "Frameworks, Libraries, and Embedded Content". Change "Embed" to "Embed and Sign".
+- In the left column, double-click on the "ContentView" file, it will open in the main window.
+
+Replace the content of "ContentView" with the following
+```swift
+//
+//  ContentView.swift
+//  MisakiSwift
+//
+//  Created by Michael J. Ellis on 9/24/25.
+//
+
+import SwiftUI
+import MisakiSwift
+
+struct ContentView: View {
+    @State private var inputText: String = "Hello Strange Olde World"
+    @State private var phonemes: String = ""
+    
+    // Create G2P converter (british = false for American English)
+    private let g2p = EnglishG2P(british: false)
+    
+    private func convertToPhoneme() {
+        // The phonemize function returns a tuple: (phonemes, tokens)
+        // We'll just use the phonemes string for display.
+        let (phonemesResult, _) = g2p.phonemize(text: inputText)
+        self.phonemes = phonemesResult
+    }
+    
+    var body: some View {
+        VStack {
+            Text("Grapheme to Phoneme Converter")
+                .font(.title)
+            
+            TextField("Enter text", text: $inputText)
+                .textFieldStyle(.roundedBorder)
+                .padding(.top)
+                .onSubmit {
+                    convertToPhoneme()
+                }
+            
+            Button("Convert to Phoneme") {
+                convertToPhoneme()
+            }
+            .buttonStyle(.borderedProminent)
+            .padding()
+            
+            Text(phonemes)
+        }
+        .padding()
+    }
+}
+
+#Preview {
+    ContentView()
+}
+```
+
+- COMMAND S to SAVE
+- COMMAND R to RUN
+- App should build and run.
+
+
 
 ## Overview
 
