@@ -25,3 +25,28 @@ let texts: [(originalText: String, britishPhonetization: String, americanPhoneit
     #expect(englishG2P.phonemize(text: pair.0).0 == pair.2)
   }
 }
+
+// Retokenize Currency Index Fix Tests
+@Test func testRetokenize_CurrencyWithFollowingTokens() async throws {
+  let englishG2P = EnglishG2P(british: true)
+  let (result, _) = englishG2P.phonemize(text: "$50 is the price for this item")
+  #expect(!result.isEmpty)
+  #expect(result.contains("dˈɒlə"))  // "dollar" phoneme should be present
+}
+
+// Currency appearing mid-sentence with multiple tokens before and after
+@Test func testRetokenize_CurrencyInMiddleOfSentence() async throws {
+  let englishG2P = EnglishG2P(british: false)
+  let (result, _) = englishG2P.phonemize(text: "The total cost was $100 and we paid it yesterday")
+  #expect(!result.isEmpty)
+  #expect(result.contains("dˈɑləɹz"))  // American "dollar" phoneme
+}
+
+// Multiple currency symbols trigger the currency code path multiple times
+@Test func testRetokenize_MultipleCurrenciesInText() async throws {
+  let englishG2P = EnglishG2P(british: true)
+  let (result, _) = englishG2P.phonemize(text: "I exchanged $200 for €150 at the bank today")
+  #expect(!result.isEmpty)
+  #expect(result.contains("dˈɒlə"))    // "dollar" phoneme
+  #expect(result.contains("jˈʊəɹQz"))  // "euro" phoneme
+}

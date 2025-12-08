@@ -323,10 +323,10 @@ final public class EnglishG2P {
     
     for (i, token) in tokens.enumerated() {
       let needsSplit = (token.`_`.alias == nil && token.phonemes == nil)
-      var tokens: [MToken] = []
+      var subtokens: [MToken] = []
       if needsSplit {
         let parts = subtokenize(word: token.text)
-        tokens = parts.map { part in
+        subtokens = parts.map { part in
           let t = MToken(copying: token)
           t.text = part
           t.whitespace = ""
@@ -335,12 +335,12 @@ final public class EnglishG2P {
           return t
         }
       } else {
-        tokens = [token]
+        subtokens = [token]
       }
-      tokens.last?.whitespace = token.whitespace
+      subtokens.last?.whitespace = token.whitespace
           
-      for j in 0..<tokens.count {
-        let token = tokens[j]
+      for j in 0..<subtokens.count {
+        let token = subtokens[j]
       
         if token.`_`.alias != nil || token.phonemes != nil {
           // Do nothing at his point
@@ -361,12 +361,12 @@ final public class EnglishG2P {
         } else if currency != nil {
           if token.tag != .number {
             currency = nil
-          } else if j + 1 == tokens.count && (i + 1 == tokens.count || tokens[i + 1].tag != .number) {
+          } else if j + 1 == subtokens.count && (i + 1 == tokens.count || tokens[i + 1].tag != .number) {
             token.`_`.currency = currency
           }
-        } else if j > 0 && j < tokens.count - 1 && token.text == "2" {
-          let prev = tokens[j - 1].text
-          let next = tokens[j + 1].text
+        } else if j > 0 && j < subtokens.count - 1 && token.text == "2" {
+          let prev = subtokens[j - 1].text
+          let next = subtokens[j + 1].text
           if (prev.last.map { String($0) } ?? "" + (next.first.map { String($0) } ?? "")).allSatisfy({ $0.isLetter }) ||
              (prev == "-" && next == "-") {
             token.`_`.alias = "to"
