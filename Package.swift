@@ -9,9 +9,10 @@ let package = Package(
     .iOS(.v18), .macOS(.v15)
   ],
   products: [
+    // Static library - allows consuming apps to avoid use_frameworks! :linkage => :dynamic
     .library(
       name: "MisakiSwift",
-      type: .dynamic,
+      type: .static,
       targets: ["MisakiSwift"]
     ),
   ],
