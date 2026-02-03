@@ -241,15 +241,15 @@ final public class EnglishG2P {
   }
   
   func mergeTokens(_ tokens: [MToken], unk: String? = nil) -> MToken {
-    let stressSet = Set(tokens.compactMap { $0._.stress })
-    let currencySet = Set(tokens.compactMap { $0._.currency })
-    let ratings: Set<Int?> = Set(tokens.map { $0._.rating })
-        
+    let stressSet = Set(tokens.compactMap { $0.`_`.stress })
+    let currencySet = Set(tokens.compactMap { $0.`_`.currency })
+    let ratings: Set<Int?> = Set(tokens.map { $0.`_`.rating })
+
     var phonemes: String? = nil
     if let unk {
       var phonemeBuilder = ""
       for token in tokens {
-        if token._.prespace,
+        if token.`_`.prespace,
            !phonemeBuilder.isEmpty,
            !(phonemeBuilder.last?.isWhitespace ?? false),
            token.phonemes != nil {
@@ -271,7 +271,7 @@ final public class EnglishG2P {
     
     let tokenRangeStart = tokens.first!.tokenRange.lowerBound
     let tokenRangeEnd = tokens.last!.tokenRange.upperBound
-    let flagChars = Set(tokens.flatMap { Array($0._.num_flags) })
+    let flagChars = Set(tokens.flatMap { Array($0.`_`.num_flags) })
     
     return MToken(
       text: mergedText,
@@ -282,12 +282,12 @@ final public class EnglishG2P {
       start_ts: tokens.first?.start_ts,
       end_ts: tokens.last?.end_ts,
       underscore: Underscore(
-        is_head: tokens.first?._.is_head ?? false,
+        is_head: tokens.first?.`_`.is_head ?? false,
         alias: nil,
         stress: (stressSet.count == 1 ? stressSet.first : nil),
         currency: currencySet.max(),
         num_flags: String(flagChars.sorted()),
-        prespace: tokens.first?._.prespace ?? false,
+        prespace: tokens.first?.`_`.prespace ?? false,
         rating: ratings.contains(where: { $0 == nil }) ? nil : ratings.compactMap { $0 }.min()
       )
     )
