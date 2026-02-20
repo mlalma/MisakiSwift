@@ -1,4 +1,5 @@
 import XCTest
+import MLXUtilsLibrary
 @testable import MisakiZH
 
 final class MisakiZHTests: XCTestCase {
@@ -102,7 +103,7 @@ final class MisakiZHTests: XCTestCase {
             return
         }
         let (result, _) = g2p.phonemize("你好世界")
-        XCTAssertEqual(result, "ni↗xau̯↓ʂɨ↘ʨje↘")
+        XCTAssertEqual(result, "ni↗xau̯↓ ʂɨ↘ʨje↘")
         print("你好世界 -> \(result)")
     }
 
@@ -112,7 +113,14 @@ final class MisakiZHTests: XCTestCase {
             return
         }
         let (result, _) = g2p.phonemize("你好，世界！")
-        XCTAssertEqual(result, "ni↗xau̯↓,ʂɨ↘ʨje↘!")
+        // Punctuation should be surrounded by spaces for proper TTS pauses
+        XCTAssertTrue(result.contains(","), "Should contain comma for pause")
+        XCTAssertTrue(result.contains("!"), "Should contain exclamation for pause")
+        // Verify phoneme content is correct (space-agnostic)
+        let stripped = result.replacingOccurrences(of: " ", with: "")
+        XCTAssertEqual(stripped, "ni↗xau̯↓,ʂɨ↘ʨje↘!")
+        // Verify spaces exist around punctuation
+        XCTAssertTrue(result.contains(" ,") || result.contains(", "), "Comma should have adjacent spaces for TTS pause")
         print("你好，世界！ -> \(result)")
     }
 
@@ -122,7 +130,11 @@ final class MisakiZHTests: XCTestCase {
             return
         }
         let (result, _) = g2p.phonemize("这里有500个苹果")
-        XCTAssertEqual(result, "ʈʂɤ↘li↓jou̯↓u↗pai̯↓kɤpʰi↗ŋkwo↓")
+        print(result)
+
+        // Compare phoneme content (space-agnostic, since word boundaries may vary)
+        let stripped = result.replacingOccurrences(of: " ", with: "")
+        XCTAssertEqual(stripped, "ʈʂɤ↘li↓jou̯↓u↗pai̯↓kɤpʰi↗ŋkwo↓")
         print("这里有500个苹果 -> \(result)")
     }
 
@@ -142,7 +154,11 @@ final class MisakiZHTests: XCTestCase {
             return
         }
         let (result, _) = g2p.phonemize("中华人民共和国是一个伟大的国家")
-        XCTAssertEqual(result, "ʈʂʊ→ŋxwa↗ɻə↗nmi↗nkʊ↘ŋxɤ↗kwo↗ʂɨ↘i↗kɤwei̯↓ta↘tɤkwo↗ʨja→")
+        // Compare phoneme content (space-agnostic, since word boundaries may vary)
+        let stripped = result.replacingOccurrences(of: " ", with: "")
+        XCTAssertEqual(stripped, "ʈʂʊ→ŋxwa↗ɻə↗nmi↗nkʊ↘ŋxɤ↗kwo↗ʂɨ↘i↗kɤwei̯↓ta↘tɤkwo↗ʨja→")
+        // Verify that spaces are present (word boundaries)
+        XCTAssertTrue(result.contains(" "), "Should contain spaces between words for natural TTS phrasing")
         print("中华人民共和国是一个伟大的国家 -> \(result)")
     }
 
@@ -189,5 +205,51 @@ final class MisakiZHTests: XCTestCase {
         let (result, _) = g2p.phonemize("你好")
         XCTAssertEqual(result, "ni↗xau̯↓", "你好: first 3rd tone becomes 2nd (↗) before another 3rd tone")
         print("你好 (tone sandhi) -> \(result)")
+    }
+
+    // MARK: - MToken Array (Timestamp Support)
+
+    func testMTokenArrayReturned() {
+        guard let g2p = Self.g2p else {
+            XCTFail("G2P not initialized")
+            return
+        }
+        let (result, tokens) = g2p.phonemize("你好世界")
+        XCTAssertFalse(tokens.isEmpty, "Should return MToken array for timestamp prediction")
+        XCTAssertTrue(tokens.count >= 2, "Should have at least 2 tokens for 你好 and 世界")
+
+        // Verify phonemes are set on tokens
+        for token in tokens {
+            XCTAssertNotNil(token.phonemes, "Each word token should have phonemes set")
+            XCTAssertFalse(token.phonemes!.isEmpty, "Phonemes should not be empty")
+        }
+
+        // Verify the concatenation of token phonemes + whitespace matches the result
+        let reconstructed = tokens.map { ($0.phonemes ?? "") + $0.whitespace }.joined()
+        XCTAssertEqual(reconstructed, result, "Concatenated tokens should match the phoneme string")
+        print("MToken test: \(tokens.count) tokens for '你好世界'")
+    }
+
+    func testMTokenArrayWithPunctuation() {
+        guard let g2p = Self.g2p else {
+            XCTFail("G2P not initialized")
+            return
+        }
+        let (result, tokens) = g2p.phonemize("你好，世界！")
+        XCTAssertFalse(tokens.isEmpty, "Should return MToken array")
+
+        // Should have tokens for: 你好, comma, 世界, exclamation
+        XCTAssertTrue(tokens.count >= 3, "Should have tokens for words and punctuation")
+
+        // Verify punctuation tokens exist
+        let hasComma = tokens.contains { $0.phonemes?.contains(",") == true }
+        let hasExclamation = tokens.contains { $0.phonemes?.contains("!") == true }
+        XCTAssertTrue(hasComma, "Should have a comma token")
+        XCTAssertTrue(hasExclamation, "Should have an exclamation token")
+
+        // Verify reconstruction
+        let reconstructed = tokens.map { ($0.phonemes ?? "") + $0.whitespace }.joined()
+        XCTAssertEqual(reconstructed, result, "Concatenated tokens should match the phoneme string")
+        print("MToken punct test: \(tokens.count) tokens for '你好，世界！'")
     }
 }

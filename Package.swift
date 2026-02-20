@@ -12,13 +12,11 @@ let package = Package(
     // English-only G2P (lightweight - no Chinese dictionaries or C++ deps)
     .library(
       name: "MisakiSwift",
-      type: .dynamic,
       targets: ["MisakiSwift"]
     ),
     // Chinese G2P - includes English support via MisakiSwift dependency
     .library(
       name: "MisakiZH",
-      type: .dynamic,
       targets: ["MisakiZH"]
     ),
   ],
@@ -79,7 +77,11 @@ let package = Package(
     ),
     .target(
       name: "MisakiZH",
-      dependencies: ["CppJieba", "MisakiSwift"],
+      dependencies: [
+        "CppJieba",
+        "MisakiSwift",
+        .product(name: "MLXUtilsLibrary", package: "MLXUtilsLibrary")
+      ],
       path: "Sources/MisakiZH",
       resources: [
         .copy("Resources/dict"),
@@ -93,7 +95,10 @@ let package = Package(
     ),
     .testTarget(
       name: "MisakiZHTests",
-      dependencies: ["MisakiZH"]
+      dependencies: [
+        "MisakiZH",
+        .product(name: "MLXUtilsLibrary", package: "MLXUtilsLibrary")
+      ]
     ),
   ],
   cxxLanguageStandard: .cxx17

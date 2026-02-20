@@ -1,5 +1,6 @@
 import Foundation
 import MisakiSwift
+import MLXUtilsLibrary
 
 /// Errors for ZHG2P initialization
 public enum ZHG2PError: Error, LocalizedError {
@@ -145,19 +146,20 @@ public final class ZHG2P {
     // MARK: - Public API
 
     /// Convert text to IPA phonemes
-    /// - Returns: Tuple of (IPA string, additional info)
-    public func phonemize(_ text: String) -> (String, String) {
-        guard !text.trimmingCharacters(in: .whitespaces).isEmpty else { return ("", "") }
+    /// - Returns: Tuple of (IPA string, MToken array for timestamp prediction)
+    public func phonemize(_ text: String) -> (String, [MToken]) {
+        guard !text.trimmingCharacters(in: .whitespaces).isEmpty else { return ("", []) }
 
         var processedText = StringUtils.convertNumbers(text)
         processedText = Self.mapPunctuation(processedText)
 
         if let frontend = frontend {
-            let tokens = frontend.process(processedText)
+            let zhTokens = frontend.process(processedText)
             var result = ""
+            var mTokens: [MToken] = []
             var lastWasEng = false
 
-            for tk in tokens {
+            for tk in zhTokens {
                 let isEng = (tk.tag == "eng")
 
                 // Space before English word
@@ -168,6 +170,10 @@ public final class ZHG2P {
                 if lastWasEng && !isEng && tk.tag != "x" && !result.isEmpty && result.last != " " {
                     result += " "
                 }
+
+                // Track whether this token adds content to result
+                let resultLenBefore = result.count
+                var tokenPhonemes = ""
 
                 if tk.tag == "x" || tk.tag == "eng" {
                     for p in tk.phonemes {
@@ -196,6 +202,7 @@ public final class ZHG2P {
                             convertedPart = p
                         }
                         result += convertedPart
+                        tokenPhonemes += convertedPart
                     }
                 } else {
                     // Chinese: split phonemes into pinyin syllables
@@ -204,21 +211,55 @@ public final class ZHG2P {
                         pinyinAcc += p
                         let hasDigit = p.contains(where: { $0.isNumber })
                         if hasDigit {
-                            result += Self.py2ipa(pinyinAcc)
+                            let ipa = Self.py2ipa(pinyinAcc)
+                            result += ipa
+                            tokenPhonemes += ipa
                             pinyinAcc = ""
                         }
                     }
                     if !pinyinAcc.isEmpty {
-                        result += Self.py2ipa(pinyinAcc)
+                        let ipa = Self.py2ipa(pinyinAcc)
+                        result += ipa
+                        tokenPhonemes += ipa
                     }
+                }
+
+                // Add space separator after each token that contributed content.
+                // This provides word boundaries and post-punctuation pauses
+                // (matching English behavior where each token is followed by whitespace).
+                let hasContent = result.count > resultLenBefore
+                var tokenWhitespace = ""
+                if hasContent && result.last != " " {
+                    result += " "
+                    tokenWhitespace = " "
+                }
+
+                // Build MToken for timestamp prediction
+                if hasContent {
+                    let dummyRange = text.startIndex..<text.startIndex
+                    let mToken = MToken(
+                        text: tk.text,
+                        tokenRange: dummyRange,
+                        whitespace: tokenWhitespace,
+                        phonemes: tokenPhonemes.isEmpty ? nil : tokenPhonemes
+                    )
+                    mTokens.append(mToken)
                 }
 
                 lastWasEng = isEng
             }
-            return (result, "")
+
+            let trimmedResult = result.trimmingCharacters(in: .whitespaces)
+
+            // Fix whitespace on last token (trimmed trailing space)
+            if let lastToken = mTokens.last, !trimmedResult.isEmpty {
+                lastToken.whitespace = ""
+            }
+
+            return (trimmedResult, mTokens)
         }
 
-        return (legacyCall(processedText), "")
+        return (legacyCall(processedText), [])
     }
 
     // MARK: - Static methods
