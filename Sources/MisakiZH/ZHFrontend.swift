@@ -33,15 +33,15 @@ public final class ZHFrontend {
         }
     }
 
-    /// Main entry: convert text to MTokens with phonemes
-    public func process(_ text: String, withErhua: Bool = true) -> [MToken] {
-        var tokens: [MToken] = []
+    /// Main entry: convert text to ZHMTokens with phonemes
+    public func process(_ text: String, withErhua: Bool = true) -> [ZHMToken] {
+        var tokens: [ZHMToken] = []
 
         let segCut = cutWithTag(text)
         let merged = toneModifier.preMergeForModify(segCut)
 
         for (word, pos) in merged {
-            var tk = MToken(text: word, tag: pos)
+            var tk = ZHMToken(text: word, tag: pos)
 
             if pos == "x" || pos == "eng" {
                 if pos == "x" && punc.contains(word) {

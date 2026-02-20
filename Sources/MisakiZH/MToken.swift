@@ -1,7 +1,7 @@
 import Foundation
 
-/// Token representing a segmented word with POS tag and phoneme information
-public struct MToken {
+/// Token representing a segmented Chinese word with POS tag and phoneme information
+public struct ZHMToken {
     public var text: String
     public var tag: String
     public var whitespace: String
