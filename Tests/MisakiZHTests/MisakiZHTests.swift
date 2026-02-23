@@ -78,6 +78,51 @@ final class MisakiZHTests: XCTestCase {
         XCTAssertEqual(StringUtils.numberToChinese("-5"), "负五")
         XCTAssertEqual(StringUtils.numberToChinese("3.14"), "三点一四")
     }
+    
+    func testDecimalNumbers() {
+        // .22 should be 零点二二 (digit by digit, not as a number)
+        XCTAssertEqual(StringUtils.num2str(".22"), "零点二二")
+        // 3.20 should strip trailing zeros → 三点二
+        XCTAssertEqual(StringUtils.num2str("3.20"), "三点二")
+        // 3.14 → 三点一四
+        XCTAssertEqual(StringUtils.num2str("3.14"), "三点一四")
+        // 000 → 零
+        XCTAssertEqual(StringUtils.verbalizeCardinal("000"), "零")
+    }
+    
+    func testPercentageConversion() {
+        // 90% → 百分之九十
+        XCTAssertEqual(StringUtils.convertNumbers("是90%"), "是百分之九十")
+        // -50.5% → 负百分之五十点五
+        XCTAssertEqual(StringUtils.convertNumbers("-50.5%"), "负百分之五十点五")
+    }
+    
+    func testFractions() {
+        // 1/2 → 二分之一
+        XCTAssertEqual(StringUtils.convertNumbers("1/2"), "二分之一")
+        // 3/4 → 四分之三
+        XCTAssertEqual(StringUtils.convertNumbers("3/4"), "四分之三")
+    }
+    
+    func testRanges() {
+        // 1-10 → 一到十
+        XCTAssertEqual(StringUtils.convertNumbers("1-10"), "一到十")
+        // 1.5~3.5 → 一点五到三点五
+        XCTAssertEqual(StringUtils.convertNumbers("1.5~3.5"), "一点五到三点五")
+    }
+    
+    func testQuantifiers() {
+        // 3个 → 三个
+        XCTAssertEqual(StringUtils.convertNumbers("3个"), "三个")
+        // 10+人 → 十多人
+        XCTAssertEqual(StringUtils.convertNumbers("10+人"), "十多人")
+    }
+    
+    func testDefaultNumbers() {
+        // 3+ digit numbers should be read digit by digit with 一→幺
+        XCTAssertEqual(StringUtils.verbalizeDigit("110", altOne: true), "幺幺零")
+        XCTAssertEqual(StringUtils.verbalizeDigit("00078", altOne: true), "零零零七八")
+    }
 
     func testConvertNumbers() {
         let result = StringUtils.convertNumbers("这里有500个苹果")
@@ -261,5 +306,11 @@ final class MisakiZHTests: XCTestCase {
         let (result, _) = g2p.phonemize("是 90%")
         XCTAssertEqual(result, "ʂɨ↘ pai̯↓fə→nʈʂɨ→ʨiuʂɨ↗")
         print("90% -> \(result)")
+    }
+    
+    func testChineseTextWithNumber() {
+        let result = StringUtils.convertNumbers("这是1234和90%和3.14和1/2")
+        XCTAssertEqual(result, "这是一千二百三十四和百分之九十和三点一四和二分之一")
+        print("这是1234和90%和3.14和1/2 -> \(result)")
     }
 }
