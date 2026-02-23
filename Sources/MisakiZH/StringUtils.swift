@@ -129,31 +129,85 @@ public enum StringUtils {
     }
 
     /// Convert numbers in text to Chinese
+    /// Handles percentages, fractions, ranges, and regular numbers
     public static func convertNumbers(_ text: String) -> String {
+        var result = text
+        
+        // 1. Handle percentages: 90% → 百分之九十
+        if let percentRegex = try? NSRegularExpression(pattern: "(-?)(\\d+(?:\\.\\d+)?)%") {
+            let nsResult = result as NSString
+            let matches = percentRegex.matches(in: result, range: NSRange(location: 0, length: nsResult.length))
+            // Process matches in reverse order to preserve indices
+            for match in matches.reversed() {
+                let signRange = match.range(at: 1)
+                let numRange = match.range(at: 2)
+                let sign = signRange.length > 0 ? "负" : ""
+                let numStr = nsResult.substring(with: numRange)
+                let numChinese = numberToChinese(numStr)
+                let replacement = "\(sign)百分之\(numChinese)"
+                result = (result as NSString).replacingCharacters(in: match.range, with: replacement)
+            }
+        }
+        
+        // 2. Handle fractions: 1/2 → 二分之一
+        if let fracRegex = try? NSRegularExpression(pattern: "(-?)(\\d+)/(\\d+)") {
+            let nsResult = result as NSString
+            let matches = fracRegex.matches(in: result, range: NSRange(location: 0, length: nsResult.length))
+            for match in matches.reversed() {
+                let signRange = match.range(at: 1)
+                let numeratorRange = match.range(at: 2)
+                let denominatorRange = match.range(at: 3)
+                let sign = signRange.length > 0 ? "负" : ""
+                let numerator = nsResult.substring(with: numeratorRange)
+                let denominator = nsResult.substring(with: denominatorRange)
+                let numChinese = numberToChinese(numerator)
+                let denomChinese = numberToChinese(denominator)
+                let replacement = "\(sign)\(denomChinese)分之\(numChinese)"
+                result = (result as NSString).replacingCharacters(in: match.range, with: replacement)
+            }
+        }
+        
+        // 3. Handle ranges: 1-10 or 1~10 → 一到十
+        if let rangeRegex = try? NSRegularExpression(pattern: "(\\d+(?:\\.\\d+)?)[-~](\\d+(?:\\.\\d+)?)") {
+            let nsResult = result as NSString
+            let matches = rangeRegex.matches(in: result, range: NSRange(location: 0, length: nsResult.length))
+            for match in matches.reversed() {
+                let firstRange = match.range(at: 1)
+                let secondRange = match.range(at: 2)
+                let first = nsResult.substring(with: firstRange)
+                let second = nsResult.substring(with: secondRange)
+                let firstChinese = numberToChinese(first)
+                let secondChinese = numberToChinese(second)
+                let replacement = "\(firstChinese)到\(secondChinese)"
+                result = (result as NSString).replacingCharacters(in: match.range, with: replacement)
+            }
+        }
+        
+        // 4. Handle regular numbers (with optional sign and decimals)
         let pattern = "[-+]?\\d+(?:\\.\\d+)*"
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return text }
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return result }
 
-        let nsText = text as NSString
-        let matches = regex.matches(in: text, range: NSRange(location: 0, length: nsText.length))
+        let nsText = result as NSString
+        let matches = regex.matches(in: result, range: NSRange(location: 0, length: nsText.length))
 
-        guard !matches.isEmpty else { return text }
+        guard !matches.isEmpty else { return result }
 
-        var result = ""
+        var finalResult = ""
         var lastPos = 0
         for match in matches {
             let range = match.range
             // Append text before match
-            result += nsText.substring(with: NSRange(location: lastPos, length: range.location - lastPos))
+            finalResult += nsText.substring(with: NSRange(location: lastPos, length: range.location - lastPos))
             // Convert the number
             let numStr = nsText.substring(with: range)
-            result += numberToChinese(numStr)
+            finalResult += numberToChinese(numStr)
             lastPos = range.location + range.length
         }
         // Append remaining
         if lastPos < nsText.length {
-            result += nsText.substring(from: lastPos)
+            finalResult += nsText.substring(from: lastPos)
         }
-        return result
+        return finalResult
     }
 
     /// Check if a string contains Chinese characters

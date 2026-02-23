@@ -252,4 +252,14 @@ final class MisakiZHTests: XCTestCase {
         XCTAssertEqual(reconstructed, result, "Concatenated tokens should match the phoneme string")
         print("MToken punct test: \(tokens.count) tokens for '你好，世界！'")
     }
+    
+    func testPercentage() {
+        guard let g2p = Self.g2p else {
+            XCTFail("G2P not initialized")
+            return
+        }
+        let (result, _) = g2p.phonemize("是 90%")
+        XCTAssertEqual(result, "ʂɨ↘ pai̯↓fə→nʈʂɨ→ʨiuʂɨ↗")
+        print("90% -> \(result)")
+    }
 }
