@@ -1,4 +1,4 @@
-// swift-tools-version: 6.2
+// swift-tools-version: 6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -17,7 +17,7 @@ let package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/ml-explore/mlx-swift", exact: "0.30.2"),
-    .package(url: "https://github.com/mlalma/MLXUtilsLibrary.git", exact: "0.0.6")
+    .package(url: "https://github.com/mlalma/MLXUtilsLibrary.git", exact: "0.0.6"),
   ],
   targets: [
     .target(
