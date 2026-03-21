@@ -13,9 +13,9 @@ final class EnglishFallbackNetwork {
 
   private let british: Bool
     
-  init(british: Bool) {    
-    configuration = EnglishFallbackNetwork.loadConfig(british: british)!
-    modelWeights = EnglishFallbackNetwork.loadWeights(british: british)!
+  init(british: Bool, resourceDir: URL? = nil) {
+    configuration = EnglishFallbackNetwork.loadConfig(british: british, resourceDir: resourceDir)!
+    modelWeights = EnglishFallbackNetwork.loadWeights(british: british, resourceDir: resourceDir)!
     
     self.british = british
     
@@ -72,22 +72,31 @@ final class EnglishFallbackNetwork {
     return (outputText, 1)
   }
   
-  private static func loadConfig(british: Bool) -> BARTConfig? {
+  private static func loadConfig(british: Bool, resourceDir: URL? = nil) -> BARTConfig? {
     let fileName = "\(british ? "gb" : "us")_bart_config"
-    
-    
-    guard let url = Bundle.module.url(forResource: fileName, withExtension: "json", subdirectory: "Resources"),
-          let data = try? Data(contentsOf: url),
+
+    let url: URL?
+    if let resourceDir {
+        url = resourceDir.appendingPathComponent("\(fileName).json")
+    } else {
+        url = Bundle.module.url(forResource: fileName, withExtension: "json", subdirectory: "Resources")
+    }
+    guard let url, let data = try? Data(contentsOf: url),
           let config = try? JSONDecoder().decode(BARTConfig.self, from: data) else {
         return nil
     }
     return config
   }
   
-  private static func loadWeights(british: Bool) -> [String: MLXArray]? {
+  private static func loadWeights(british: Bool, resourceDir: URL? = nil) -> [String: MLXArray]? {
     let fileName = "\(british ? "gb" : "us")_bart"
-    guard let url = Bundle.module.url(forResource: fileName, withExtension: "safetensors", subdirectory: "Resources"),
-          let weights = try? MLX.loadArrays(url: url) else {
+    let url: URL?
+    if let resourceDir {
+        url = resourceDir.appendingPathComponent("\(fileName).safetensors")
+    } else {
+        url = Bundle.module.url(forResource: fileName, withExtension: "safetensors", subdirectory: "Resources")
+    }
+    guard let url, let weights = try? MLX.loadArrays(url: url) else {
       return nil
     }
     return weights
