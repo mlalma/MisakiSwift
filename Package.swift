@@ -26,7 +26,8 @@ let package = Package(
       dependencies: [
         .product(name: "MLX", package: "mlx-swift"),
         .product(name: "MLXNN", package: "mlx-swift"),
-        .product(name: "MLXUtilsLibrary", package: "MLXUtilsLibrary")
+        .product(name: "MLXUtilsLibrary", package: "MLXUtilsLibrary"),
+        .product(name: "OrderedCollections", package: "swift-collections"),
      ],
      resources: []
     ),
