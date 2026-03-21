@@ -11,7 +11,7 @@ let package = Package(
   products: [
     .library(
       name: "MisakiSwift",
-      type: .dynamic,
+      type: .static,
       targets: ["MisakiSwift"]
     ),
   ],
@@ -27,9 +27,7 @@ let package = Package(
         .product(name: "MLXNN", package: "mlx-swift"),
         .product(name: "MLXUtilsLibrary", package: "MLXUtilsLibrary")
      ],
-     resources: [
-      .copy("../../Resources/")
-     ]
+     resources: []
     ),
     .testTarget(
       name: "MisakiSwiftTests",

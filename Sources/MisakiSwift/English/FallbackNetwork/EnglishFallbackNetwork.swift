@@ -75,28 +75,20 @@ final class EnglishFallbackNetwork {
   private static func loadConfig(british: Bool, resourceDir: URL? = nil) -> BARTConfig? {
     let fileName = "\(british ? "gb" : "us")_bart_config"
 
-    let url: URL?
-    if let resourceDir {
-        url = resourceDir.appendingPathComponent("\(fileName).json")
-    } else {
-        url = Bundle.module.url(forResource: fileName, withExtension: "json", subdirectory: "Resources")
-    }
-    guard let url, let data = try? Data(contentsOf: url),
+    guard let resourceDir else { return nil }
+    let url = resourceDir.appendingPathComponent("\(fileName).json")
+    guard let data = try? Data(contentsOf: url),
           let config = try? JSONDecoder().decode(BARTConfig.self, from: data) else {
         return nil
     }
     return config
   }
-  
+
   private static func loadWeights(british: Bool, resourceDir: URL? = nil) -> [String: MLXArray]? {
     let fileName = "\(british ? "gb" : "us")_bart"
-    let url: URL?
-    if let resourceDir {
-        url = resourceDir.appendingPathComponent("\(fileName).safetensors")
-    } else {
-        url = Bundle.module.url(forResource: fileName, withExtension: "safetensors", subdirectory: "Resources")
-    }
-    guard let url, let weights = try? MLX.loadArrays(url: url) else {
+    guard let resourceDir else { return nil }
+    let url = resourceDir.appendingPathComponent("\(fileName).safetensors")
+    guard let weights = try? MLX.loadArrays(url: url) else {
       return nil
     }
     return weights
