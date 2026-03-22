@@ -1,6 +1,5 @@
 import Foundation
 import NaturalLanguage
-import MLXUtilsLibrary
 
 final class Lexicon {
   static let usVocab: Set<Character> = Set("AIOWYbdfhijklmnpstuvwzæðŋɑɔəɛɜɡɪɹɾʃʊʌʒʤʧˈˌθᵊᵻʔ")

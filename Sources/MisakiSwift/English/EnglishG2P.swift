@@ -1,13 +1,12 @@
 import Foundation
 import NaturalLanguage
-import MLXUtilsLibrary
 
 // Main G2P pipeline for English text
 final public class EnglishG2P {
   private let british: Bool
   private let tagger: NLTagger
   private let lexicon: Lexicon
-  private let fallback: EnglishFallbackNetwork
+  private let fallback: EnglishFallbackNetwork?
   private let unk: String
     
   static let punctuationTags: Set<NLTag> =  Set([.openQuote, .closeQuote, .openParenthesis, .closeParenthesis, .punctuation, .sentenceTerminator, .otherPunctuation])
@@ -46,7 +45,11 @@ final public class EnglishG2P {
     self.british = british
     self.tagger = NLTagger(tagSchemes: [.nameTypeOrLexicalClass])
     self.lexicon = Lexicon(british: british, resourceDir: resourceDir)
+    #if targetEnvironment(simulator)
+    self.fallback = nil  // No Metal GPU on simulator — MLX would crash
+    #else
     self.fallback = EnglishFallbackNetwork(british: british, resourceDir: resourceDir)
+    #endif
     self.unk = unk
   }
 
@@ -416,7 +419,7 @@ final public class EnglishG2P {
           w.`_`.rating = out.1
         }
         
-        if w.phonemes == nil {
+        if w.phonemes == nil, let fallback {
           let out = fallback(w)
           w.phonemes = out.0
           w.`_`.rating = out.1
@@ -461,7 +464,7 @@ final public class EnglishG2P {
           }
         }
         
-        if shouldFallback {
+        if shouldFallback, let fallback {
           let token = mergeTokens(arr)
           let first = arr[0]
           let out = fallback(token)
@@ -474,7 +477,7 @@ final public class EnglishG2P {
               arr[j].`_`.rating = out.1
             }
           }
-        } else {
+        } else if !shouldFallback {
           resolveTokens(&arr)
         }
       }
