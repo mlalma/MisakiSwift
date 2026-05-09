@@ -76,17 +76,17 @@ final class EnglishFallbackNetwork {
     let fileName = "\(british ? "gb" : "us")_bart_config"
     
     
-    guard let url = Bundle.module.url(forResource: fileName, withExtension: "json", subdirectory: "Resources"),
+    guard let url = Bundle.module.url(forResource: fileName, withExtension: "json"),
           let data = try? Data(contentsOf: url),
           let config = try? JSONDecoder().decode(BARTConfig.self, from: data) else {
         return nil
     }
     return config
   }
-  
+
   private static func loadWeights(british: Bool) -> [String: MLXArray]? {
     let fileName = "\(british ? "gb" : "us")_bart"
-    guard let url = Bundle.module.url(forResource: fileName, withExtension: "safetensors", subdirectory: "Resources"),
+    guard let url = Bundle.module.url(forResource: fileName, withExtension: "safetensors"),
           let weights = try? MLX.loadArrays(url: url) else {
       return nil
     }
