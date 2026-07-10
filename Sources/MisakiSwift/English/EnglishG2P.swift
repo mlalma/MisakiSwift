@@ -9,6 +9,11 @@ final public class EnglishG2P {
   private let lexicon: Lexicon
   private let fallback: EnglishFallbackNetwork
   private let unk: String
+
+  /// When `true`, skips MLX BART fallback for OOV words. Pure Swift dictionary
+  /// lookups (179K entries) still run. Use in iOS background mode where Metal
+  /// GPU is unavailable. OOV words will have nil phonemes.
+  public var dictionaryOnly: Bool = false
     
   static let punctuationTags: Set<NLTag> =  Set([.openQuote, .closeQuote, .openParenthesis, .closeParenthesis, .punctuation, .sentenceTerminator, .otherPunctuation])
   static let punctuactions: Set<Character> = Set(";:,.!?—…\"“”")
@@ -416,7 +421,7 @@ final public class EnglishG2P {
           w.`_`.rating = out.1
         }
         
-        if w.phonemes == nil {
+        if w.phonemes == nil && !dictionaryOnly {
           let out = fallback(w)
           w.phonemes = out.0
           w.`_`.rating = out.1
@@ -461,7 +466,7 @@ final public class EnglishG2P {
           }
         }
         
-        if shouldFallback {
+        if shouldFallback && !dictionaryOnly {
           let token = mergeTokens(arr)
           let first = arr[0]
           let out = fallback(token)
