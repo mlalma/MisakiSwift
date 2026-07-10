@@ -17,11 +17,11 @@ struct EnglishNum2Word {
     (1000, "thousand"), (100, "hundred"),
     (90, "ninety"), (80, "eighty"), (70, "seventy"),
     (60, "sixty"), (50, "fifty"), (40, "forty"),
-    (30, "thirty")
+    (30, "thirty"), (20, "twenty")
   ]
   
   private let lowNumWords = [
-    "twenty", "nineteen", "eighteen", "seventeen",
+    "nineteen", "eighteen", "seventeen",
     "sixteen", "fifteen", "fourteen", "thirteen",
     "twelve", "eleven", "ten", "nine", "eight",
     "seven", "six", "five", "four", "three", "two",
@@ -108,11 +108,11 @@ struct EnglishNum2Word {
       return negWord + toCardinal(abs(number))
     }
     
-    if number < 21 {
-      return lowNumWords[20 - number]
+    if number < 20 {
+      return lowNumWords[19 - number]
     }
     
-    // Handle numbers from 21-99
+    // Handle numbers from 20-99
     if number < 100 {
       let tens = (number / 10) * 10
       let ones = number % 10
@@ -120,7 +120,7 @@ struct EnglishNum2Word {
         return midNumWords.first { $0.0 == tens }?.1 ?? ""
       } else {
         let tensWord = midNumWords.first { $0.0 == tens }?.1 ?? ""
-        let onesWord = lowNumWords[20 - ones]
+        let onesWord = lowNumWords[19 - ones]
         return "\(tensWord)-\(onesWord)"
       }
     }
