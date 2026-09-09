@@ -84,3 +84,26 @@ The package includes pre-trained models and dictionaries:
 - **Silver Dictionary**: Additional pronunciation mappings with slightly lower confidence
 
 These resources are automatically bundled with the package and loaded at runtime.
+
+## Running the Tests
+
+Use `xcodebuild`, not `swift test`:
+
+```sh
+xcodebuild test -scheme MisakiSwift -destination 'platform=macOS'
+```
+
+`swift test` does not work on this package, and the way it fails is misleading: it reports
+
+```
+MLX error: Failed to load the default metallib. library not found ...
+```
+
+and then executes zero tests, which looks like a broken checkout or a bad dependency pin. It is
+neither. SwiftPM on the command line cannot compile Metal shaders, so `default.metallib` is never
+built — there will be no `.metallib` anywhere under `.build`. This is a documented mlx-swift
+limitation rather than anything specific to MisakiSwift; see
+[its README](https://github.com/ml-explore/mlx-swift#xcodebuild): *"SwiftPM (command line) cannot
+build the Metal shaders so the ultimate build has to be done via Xcode."*
+
+`xcodebuild` does compile them, and the suite then runs clean.
