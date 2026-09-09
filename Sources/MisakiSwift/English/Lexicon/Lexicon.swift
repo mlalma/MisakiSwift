@@ -198,7 +198,12 @@ final class Lexicon {
       return lookup(target, tag: nil, stress: -0.5, ctx: ctx)
     } else if let sym = Lexicon.symbolSet[word] {
       return lookup(sym, tag: nil, stress: nil, ctx: ctx)
-    } else if word.trimmingCharacters(in: CharacterSet(charactersIn: ".")).contains(".") {
+    } else if word.trimmingCharacters(in: CharacterSet(charactersIn: ".")).contains("."),
+              word.replacingOccurrences(of: ".", with: "").allSatisfy({ $0.isLetter }) {
+      // Only letters separated by dots are an initialism. Upstream misaki guards this
+      // branch with `word.replace('.', '').isalpha()`; without it a short decimal such
+      // as "2.8" or "4.99" is treated as one and sent to getNNP, which returns empty
+      // phonemes for digits, so the number is dropped from the utterance entirely.
       let parts = word.split(separator: ".")
       if parts.map({ $0.count }).max() ?? 0 < 3 {
         return getNNP(word)

@@ -50,3 +50,25 @@ let texts: [(originalText: String, britishPhonetization: String, americanPhoneit
   #expect(result.contains("dˈɒlə"))    // "dollar" phoneme
   #expect(result.contains("jˈʊəɹQz"))  // "euro" phoneme
 }
+
+// A short decimal is not an initialism. Without the `isalpha` guard on the
+// initialism branch of `getSpecialCase`, "2.8" and "4.99" are routed to getNNP,
+// which returns empty phonemes for digits, and the number is dropped from the
+// utterance. "3.141" always escaped, because a part of three or more characters
+// fails the initialism length test — which is why this only ever showed up on
+// short decimals and looked like a currency bug.
+@Test func testDecimals_ShortDecimalIsNotAnInitialism() async throws {
+  let englishG2P = EnglishG2P(british: false)
+
+  for text in ["2.8", "4.99", "$0.99", "$19.99", "It costs $4.50 today"] {
+    #expect(!englishG2P.phonemize(text: text).0.isEmpty, "\(text) produced no phonemes")
+  }
+}
+
+@Test func testDecimals_InitialismsStillSpelled() async throws {
+  let englishG2P = EnglishG2P(british: false)
+
+  // The guard must not break real initialisms, which are letters joined by dots.
+  #expect(!englishG2P.phonemize(text: "U.S.A.").0.isEmpty)
+  #expect(!englishG2P.phonemize(text: "M.R.C.S.").0.isEmpty)
+}
