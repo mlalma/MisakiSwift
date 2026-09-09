@@ -1,0 +1,58 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    # macos-26, not macos-15: Package.swift declares swift-tools-version 6.2,
+    # and the macos-15 image still defaults to Xcode 16.4 / Swift 6.1, which
+    # fails at dependency resolution before it builds anything. macos-26
+    # defaults to Xcode 26.x / Swift 6.3.
+    # Apple Silicon either way, which MLX needs — the tests reach it through
+    # the BART fallback network for out-of-vocabulary words.
+    runs-on: macos-26
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Test
+        # xcodebuild, NOT `swift test`. SwiftPM on the command line cannot
+        # compile Metal shaders, so mlx-swift's default.metallib is never built
+        # and every test aborts with "Failed to load the default metallib"
+        # while the process still exits 0. See README, "Running the Tests".
+        #
+        # -skipPackagePluginValidation: mlx-swift ships a CudaBuild build
+        # plugin, and Xcode refuses to run an unapproved package plugin. A
+        # developer machine approves it once interactively; a fresh runner has
+        # nothing to approve with, and fails with "Plugin CudaBuild ... must be
+        # enabled before it can be used".
+        #
+        # arch=arm64 pins the destination: the runner matches seven macOS
+        # destinations and xcodebuild otherwise picks the first and warns.
+        run: |
+          xcodebuild test \
+            -scheme MisakiSwift \
+            -destination 'platform=macOS,arch=arm64' \
+            -skipPackagePluginValidation \
+            -resultBundlePath TestResults.xcresult
+
+      - name: Upload results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TestResults
+          path: TestResults.xcresult
+          retention-days: 7
