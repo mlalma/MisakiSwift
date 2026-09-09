@@ -570,7 +570,12 @@ final class Lexicon {
                 let tail = num.dropFirst().compactMap { Int(String($0)) }.map { num2Words.convert(Decimal($0)) }.joined(separator: " ")
                 word = "point " + tail
             } else {
-              if let d = Double(num) { word = num2Words.convert(Decimal(d)) }
+              // Parse base-10 text as base-10. Double("1971.13") is a binary
+              // approximation holding 1971.130000000000512, and Decimal(_: Double)
+              // preserves that faithfully, so toDecimal then reads every one of
+              // those fractional digits aloud. Decimal(string:) is exact for
+              // decimal text, which is what a written number is.
+              if let dec = Decimal(string: num) { word = num2Words.convert(dec) }
             }
         }
         
