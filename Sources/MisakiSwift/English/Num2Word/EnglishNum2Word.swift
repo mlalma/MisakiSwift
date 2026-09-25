@@ -51,6 +51,7 @@ struct EnglishNum2Word {
         // Currently really, really large numbers are not handled
       }      
     }
+    cards[1000] = "thousand"
     self.cards = cards
   }
   
@@ -137,21 +138,7 @@ struct EnglishNum2Word {
       }
     }
     
-    // Handle thousands and higher
-    for (value, word) in midNumWords.sorted(by: { $0.0 > $1.0 }) {
-      if number >= value {
-        let quotient = number / value
-        let remainder = number % value
-        let quotientWord = toCardinal(quotient)
-        if remainder == 0 {
-          return "\(quotientWord) \(word)"
-        } else {
-          return "\(quotientWord) \(word), \(toCardinal(remainder))"
-        }
-      }
-    }
-    
-    // Handle very large numbers using cards
+    // Handle thousands and higher, largest scale first
     for (value, word) in cards.sorted(by: { $0.key > $1.key }) {
       if number >= value {
         let quotient = number / value
