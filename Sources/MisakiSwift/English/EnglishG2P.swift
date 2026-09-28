@@ -349,7 +349,20 @@ final public class EnglishG2P {
           token.phonemes = ""
           token.`_`.rating = 4
         } else if token.tag == .dash || (token.tag == .punctuation && token.text == "–") {
-          token.phonemes = "—"
+          // A hyphen glued between word characters joins a compound and must
+          // not pause: "—" is a real token in Kokoro's vocabulary, so
+          // "self-compassion" was spoken in two pieces. A standalone dash,
+          // used as punctuation, keeps its pause.
+          //
+          // It emits a SPACE rather than an empty string. Emitting "" removes
+          // the pause but concatenates the two halves' phonemes with no
+          // boundary — sˈɛlf + kəmpˈæʃən becomes sˈɛlfkəmpˈæʃən — which fixes
+          // the pause and invents a new word. A space reproduces exactly what
+          // the spaced spelling produces.
+          let isGluedHyphen = token.text == "-"
+              && !token.`_`.prespace
+              && token.whitespace.isEmpty
+          token.phonemes = isGluedHyphen ? " " : "—"
           token.`_`.rating = 3
         } else if let tag = token.tag, EnglishG2P.punctuationTags.contains(tag), !token.text.lowercased().unicodeScalars.allSatisfy({ (97...122).contains(Int($0.value)) }) {
           if let val = EnglishG2P.punctuationTagPhonemes[token.text] {
