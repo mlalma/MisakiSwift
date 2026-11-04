@@ -50,3 +50,14 @@ let texts: [(originalText: String, britishPhonetization: String, americanPhoneit
   #expect(result.contains("dˈɒlə"))    // "dollar" phoneme
   #expect(result.contains("jˈʊəɹQz"))  // "euro" phoneme
 }
+
+// Numbers 21–29 keep "twenty" (the tens word was missing from the lookup used for 21–99)
+@Test func testNum2Word_TwentyToTwentyNine() async throws {
+  let num2Word = EnglishNum2Word()
+  #expect(num2Word.convert(25) == "twenty-five")
+  #expect(num2Word.convert(21) == "twenty-one")
+  #expect(num2Word.convert(29) == "twenty-nine")
+  #expect(num2Word.convert(121) == "one hundred and twenty-one")
+  #expect(num2Word.convert(1925, to: .year) == "nineteen twenty-five")
+  #expect(num2Word.convert(2025, to: .year) == "twenty twenty-five")
+}
